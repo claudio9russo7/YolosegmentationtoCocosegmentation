@@ -6,8 +6,9 @@ images_directory = r"C:\Users\Claudio\PycharmProjects\texturetriangle\Images"
 
 
 
-categorie = ["Stomata"]
-creation_json_yolo_to_coco(images_directory,annotation_directory, categories=categorie)
+categorie = ["chenopodium", "papaver", "Veronica persica", "Stellaria media", "Veronica", "Ranunculus", "Polygonum", "Leguminose",
+             "Rafano", "Camomilla", "Fumaria"]
+creation_json_yolo_to_coco(images_directory,annotation_directory, categories=categorie, singleormultiple= "s")
 
 
 

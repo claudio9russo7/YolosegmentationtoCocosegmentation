@@ -46,29 +46,21 @@ def yolo_coord_to_coco(list_of_value, width, height):
 
 def bbox_coco(list_of_value):
     list_of_point = list_of_value
-    number_of_point = len(list_of_point)
-    min_point = [8000, 8000]
-    max_point = [0, 0]
-    for i in range(0, number_of_point - 1):
-        if list_of_point[i][0] < min_point[0]:
-            min_point[0] = list_of_point[i][0]
-    for i in range(0, number_of_point - 1):
-        if list_of_point[i][1] < min_point[1]:
-            min_point[1] = list_of_point[i][1]
-    for i in range(0, number_of_point - 1):
-        if list_of_point[i][0] > max_point[0]:
-            max_point[0] = list_of_point[i][0]
-    for i in range(0, number_of_point - 1):
-        if list_of_point[i][1] > max_point[1]:
-            max_point[1] = list_of_point[i][1]
-    width = round(max_point[0] - min_point[0], 2)
-    height = round(max_point[1] - min_point[1], 2)
-    result = []
-    for element in min_point:
-        result.append(element)
-    result.append(width)
-    result.append(height)
-    return result
+    x_coord = []
+    y_coord = []
+    for point in list_of_point:
+        x_point = point[0]
+        x_coord.append(x_point)
+    for point in list_of_point:
+        y_point = point[1]
+        y_coord.append(y_point)
+    min_x = min(x_coord)
+    min_y = min(y_coord)
+    max_x = max(x_coord)
+    max_y = max(y_coord)
+    width = round(max_x - min_x, 2)
+    height = round(max_y - min_y, 2)
+    return [min_x, min_y, width, height]
 
 
 def area_calculator(list_of_value):
@@ -85,49 +77,86 @@ def area_calculator(list_of_value):
     return final_sum
 
 
-def creation_json_yolo_to_coco(images_directory, annotation_directory, categories):
+def creation_json_yolo_to_coco(images_directory, annotation_directory, categories, singleormultiple):
     codified_categories = creates_categories(categories)
-    base_json = {"licenses": [{"name": "", "id": 0, "url": ""}], "info": {"contributor": "", "date_created": "",
-                                                                          "description": "", "url": "", "version": "",
-                                                                          "year": ""},
-                 "categories": codified_categories,
-                 "images": [],
-                 "annotations": []
-                 }
+    if singleormultiple == "m":
+        for file in os.listdir(images_directory):
+            base_json = {"licenses": [{"name": "", "id": 0, "url": ""}], "info": {"contributor": "", "date_created": "",
+                                                                                  "description": "", "url": "",
+                                                                                  "version": "",
+                                                                                  "year": ""},
+                         "categories": codified_categories,
+                         "images": [],
+                         "annotations": []
+                         }
+            image = {"id": 1, "width": "", "height": "", "file_name": "", "license": 0,
+                     "flickr_url": "", "coco_url": "", "date_captured": 0}
+            im = Image.open(os.path.join(images_directory, file))
+            w, h = im.size
+            image["width"] = w
+            image["height"] = h
+            image["file_name"] = file
+            base_json["images"].append(image)
+            annotation_file = os.path.splitext(file)[0] + ".txt"
+            new_file = open(os.path.join(annotation_directory, annotation_file), "r")
+            id_annotation = 1
+            for line in new_file:
+                annotation = {"id": "", "image_id": 1, "category_id": "", "segmentation": [],
+                              "area": "", "bbox": [], "iscrowd": 0, "attributes": {"occluded": False}}
+                ann = line.split()
+                point_in_coco_format = yolo_coord_to_coco(list_of_value=ann, width=w, height=h)
+                annotation["category_id"] = int(ann[0]) + 1
+                annotation["segmentation"] = [[x for t in point_in_coco_format for x in t]]
+                annotation["bbox"] = bbox_coco(point_in_coco_format)
+                annotation["area"] = area_calculator(list_of_value=point_in_coco_format)
+                annotation["id"] = id_annotation
+                id_annotation += 1
+                base_json["annotations"].append(annotation)
 
-    for file in os.listdir(images_directory):
-        image = {"id": 1, "width": "", "height": "", "file_name": "", "license": 0,
-                 "flickr_url": "", "coco_url": "", "date_captured": 0}
-        im = Image.open(os.path.join(images_directory, file))
-        w, h = im.size
-        image["width"] = w
-        image["height"] = h
-        image["file_name"] = file
-        base_json["images"].append(image)
-        annotation_file = file[:-3] + "txt"
-        new_file = open(os.path.join(annotation_directory, annotation_file), "r")
-        id_annotation = 1
-        for line in new_file:
-            annotation = {"id": "", "image_id": 1, "category_id": "", "segmentation": [],
-                          "area": "", "bbox": [], "iscrowd": 0, "attributes": {"occluded": False}}
-            ann = line.split()
-            point_in_coco_format = yolo_coord_to_coco(list_of_value=ann, width= w, height= h)
-            annotation["category_id"] = int(ann[0]) + 1
-            annotation["segmentation"] = [[x for t in point_in_coco_format for x in t]]
-            annotation["bbox"] = bbox_coco(point_in_coco_format)
-            annotation["area"] = area_calculator(list_of_value=point_in_coco_format)
-            annotation["id"] = id_annotation
-            id_annotation += 1
-            base_json["annotations"].append(annotation)
-
-        with open(f"{file[:-4]}.json", "w") as outfile:
+            with open(f"{annotation_file[:-4]}.json", "w") as outfile:
+                json.dump(base_json, outfile)
+    elif singleormultiple == "s":
+        image_id = 1
+        base_json = {"licenses": [{"name": "", "id": 0, "url": ""}], "info": {"contributor": "", "date_created": "",
+                                                                              "description": "", "url": "",
+                                                                              "version": "",
+                                                                              "year": ""},
+                     "categories": codified_categories,
+                     "images": [],
+                     "annotations": []
+                     }
+        for file in os.listdir(images_directory):
+            image = {"id": image_id, "width": "", "height": "", "file_name": "", "license": 0,
+                     "flickr_url": "", "coco_url": "", "date_captured": 0}
+            im = Image.open(os.path.join(images_directory, file))
+            w, h = im.size
+            image["width"] = w
+            image["height"] = h
+            image["file_name"] = file
+            base_json["images"].append(image)
+            annotation_file = os.path.splitext(file)[0] + ".txt"
+            new_file = open(os.path.join(annotation_directory, annotation_file), "r")
+            id_annotation = 1
+            for line in new_file:
+                annotation = {"id": "", "image_id": image_id, "category_id": "", "segmentation": [],
+                              "area": "", "bbox": [], "iscrowd": 0, "attributes": {"occluded": False}}
+                ann = line.split()
+                point_in_coco_format = yolo_coord_to_coco(list_of_value=ann, width=w, height=h)
+                annotation["category_id"] = int(ann[0]) + 1
+                annotation["segmentation"] = [[x for t in point_in_coco_format for x in t]]
+                annotation["bbox"] = bbox_coco(point_in_coco_format)
+                annotation["area"] = area_calculator(list_of_value=point_in_coco_format)
+                annotation["id"] = id_annotation
+                id_annotation += 1
+                base_json["annotations"].append(annotation)
+            image_id += 1
+        name_file = input("How do you want to call the final file?")
+        with open(f"{name_file}.json", "w") as outfile:
             json.dump(base_json, outfile)
-
-
-
-
-
-
+    else:
+        print("Remember to select the mode for the json output:\n"
+              "'m' = if you want multiple file, so a file for every yolo_annotation\n"
+              "'s' = if you want a single file for all yolo_annotation")
 
 
 
