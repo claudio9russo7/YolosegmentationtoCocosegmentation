@@ -77,10 +77,11 @@ def area_calculator(list_of_value):
     return final_sum
 
 
-def creation_json_yolo_to_coco(images_directory, annotation_directory, categories, singleormultiple):
+def creation_json_yolo_to_coco(images_to_elaborate_directory, annotation_to_elaborate_directory,
+                               annotation_elaborate_directory, categories, singleormultiple):
     codified_categories = creates_categories(categories)
     if singleormultiple == "m":
-        for file in os.listdir(images_directory):
+        for file in os.listdir(images_to_elaborate_directory):
             base_json = {"licenses": [{"name": "", "id": 0, "url": ""}], "info": {"contributor": "", "date_created": "",
                                                                                   "description": "", "url": "",
                                                                                   "version": "",
@@ -91,14 +92,18 @@ def creation_json_yolo_to_coco(images_directory, annotation_directory, categorie
                          }
             image = {"id": 1, "width": "", "height": "", "file_name": "", "license": 0,
                      "flickr_url": "", "coco_url": "", "date_captured": 0}
-            im = Image.open(os.path.join(images_directory, file))
+            im = Image.open(os.path.join(images_to_elaborate_directory, file))
             w, h = im.size
             image["width"] = w
             image["height"] = h
             image["file_name"] = file
             base_json["images"].append(image)
             annotation_file = os.path.splitext(file)[0] + ".txt"
-            new_file = open(os.path.join(annotation_directory, annotation_file), "r")
+            annotation_path = os.path.join(annotation_to_elaborate_directory, annotation_file)
+            if not os.path.isfile(annotation_path):
+                print(f"Skip {file}: Annotation not found!")
+                continue
+            new_file = open(os.path.join(annotation_to_elaborate_directory, annotation_file), "r")
             id_annotation = 1
             for line in new_file:
                 annotation = {"id": "", "image_id": 1, "category_id": "", "segmentation": [],
@@ -113,8 +118,9 @@ def creation_json_yolo_to_coco(images_directory, annotation_directory, categorie
                 id_annotation += 1
                 base_json["annotations"].append(annotation)
 
-            with open(f"{annotation_file[:-4]}.json", "w") as outfile:
+            with open(os.path.join(annotation_elaborate_directory, f"{annotation_file[:-4]}.json"), "w") as outfile:
                 json.dump(base_json, outfile)
+
     elif singleormultiple == "s":
         image_id = 1
         base_json = {"licenses": [{"name": "", "id": 0, "url": ""}], "info": {"contributor": "", "date_created": "",
@@ -125,17 +131,21 @@ def creation_json_yolo_to_coco(images_directory, annotation_directory, categorie
                      "images": [],
                      "annotations": []
                      }
-        for file in os.listdir(images_directory):
+        for file in os.listdir(images_to_elaborate_directory):
             image = {"id": image_id, "width": "", "height": "", "file_name": "", "license": 0,
                      "flickr_url": "", "coco_url": "", "date_captured": 0}
-            im = Image.open(os.path.join(images_directory, file))
+            im = Image.open(os.path.join(images_to_elaborate_directory, file))
             w, h = im.size
             image["width"] = w
             image["height"] = h
             image["file_name"] = file
             base_json["images"].append(image)
             annotation_file = os.path.splitext(file)[0] + ".txt"
-            new_file = open(os.path.join(annotation_directory, annotation_file), "r")
+            annotation_path = os.path.join(annotation_to_elaborate_directory, annotation_file)
+            if not os.path.isfile(annotation_path):
+                print(f"Skip {file}: Annotation not found!")
+                continue
+            new_file = open(os.path.join(annotation_to_elaborate_directory, annotation_file), "r")
             id_annotation = 1
             for line in new_file:
                 annotation = {"id": "", "image_id": image_id, "category_id": "", "segmentation": [],
@@ -151,7 +161,7 @@ def creation_json_yolo_to_coco(images_directory, annotation_directory, categorie
                 base_json["annotations"].append(annotation)
             image_id += 1
         name_file = input("How do you want to call the final file?")
-        with open(f"{name_file}.json", "w") as outfile:
+        with open(os.path.join(annotation_elaborate_directory, f"{name_file}.json"), "w") as outfile:
             json.dump(base_json, outfile)
     else:
         print("Remember to select the mode for the json output:\n"

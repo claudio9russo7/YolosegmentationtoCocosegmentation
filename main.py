@@ -1,14 +1,14 @@
-import json
-from check import creates_categories, creation_json_yolo_to_coco
 
-annotation_directory = r"C:\Users\Claudio\PycharmProjects\texturetriangle\Annotations"
-images_directory = r"C:\Users\Claudio\PycharmProjects\texturetriangle\Images"
+from check import creation_json_yolo_to_coco
+
+annotation_to_elaborate_directory = r"C:\Users\Claudio\PycharmProjects\YolosegmentationtoCocosegmentation\annotation_to_elaborate_directory"
+images_to_elaborate_directory = r"C:\Users\Claudio\PycharmProjects\YolosegmentationtoCocosegmentation\images_to_elaborate_directory"
+annotation_elaborate_directory = r"C:\Users\Claudio\PycharmProjects\YolosegmentationtoCocosegmentation\annotation_elaborate"
 
 
-
-categorie = ["chenopodium", "papaver", "Veronica persica", "Stellaria media", "Veronica", "Ranunculus", "Polygonum", "Leguminose",
-             "Rafano", "Camomilla", "Fumaria"]
-creation_json_yolo_to_coco(images_directory,annotation_directory, categories=categorie, singleormultiple= "s")
+categorie = ["Stomata"]
+creation_json_yolo_to_coco(images_to_elaborate_directory,annotation_to_elaborate_directory, annotation_elaborate_directory,
+                           categories=categorie, singleormultiple= "m")
 
 
 
