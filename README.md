@@ -1,6 +1,16 @@
 # Yolo-segmentation-to-Coco-segmentation
-This is a script useful to transform Yolo segmentation annotation in Coco segmentation annotation.\
-The script uses basic python package (json, PIL and os).\
-In order to use it, it is necessary to define the Image directory, Annotation Directory and type of categories.\
-This script in the current form creates for every images an annotation file in COCO format (.json).\
-It is designed in this way in order to upload on annotation tool like CVAT the singular annotation file for every images.
+This script is designed to convert YOLO segmentation annotations into COCO segmentation annotations. \
+It utilizes basic Python packages, including json, PIL, and os.
+
+# Requirements
+To use this script, you need to specify:
+
+The image directory \
+The annotation directory \
+The category types
+# Modes of Operation
+The script can operate in two different modes, controlled by the variable singleormultiple in the creation_json_yolo_to_coco function:
+
+"m" (multiple): Generates a separate JSON file for each image. \
+"s" (single): Creates a single JSON file containing annotations for all images.
+
